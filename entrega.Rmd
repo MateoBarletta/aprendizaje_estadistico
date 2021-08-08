@@ -10,10 +10,15 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r, warning=FALSE, message=FALSE}
+```{r setupo, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(knitr)
 library(kableExtra)
+
 library(dplyr)
 library(ggplot2)
+
 library(modeest)
 library(rpart)
 library(rpart.plot)
@@ -39,7 +44,9 @@ data <- tibble(
                            id %in% c(4, 5, 15)     ~ "Grupo 6"))
 ```
 
-Muestro los valores promedio de la variable continua y la moda de la variable de clasificación, para cada grupo:
+![Figura 1](output/figura1.png)
+
+Muestro los valores promedio de la variable continua y la moda de la variable de clasificación, para cada grupo según la Figura 1:
 
 ```{r}
 data %>% 
@@ -52,7 +59,7 @@ data %>%
 
 
 #### 1) Con las particiones de la Figura 1 dibuja la estructura del árbol de regresión asociado.
-ACA VA LA IMAGEN
+![Esquema 1](output/esquema1.png)
 
 #### 2) Para una nueva observación X1 = 10 y X2 = 13 cuál es el valor predicho de YR por el árbol de regresión.
 Para *X1=10* y *X2=13* el árbol de regresión predice **YR=16**, ya que la observación pertenece al grupo 1.
@@ -64,10 +71,14 @@ Para *X1=4* y *X2=8* el árbol de clasificación predice **YC=A**, ya que la obs
 ## Ejercicio 3
 
 #### 1) ¿Cuál es la probabilidad que la primer observación de la muestra *bootstrap* sea la primer observación de los datos? Justifique la respuesta.
-La probabilidad de que coincidan la primera observacion de la muestra y del *bootrsap* es $1/n$, ya que se trata de un muestreo aleatorio.
+La probabilidad de que coincidan la primera observacion de la muestra y del *bootrsap* es $1/n$, ya que se trata de un muestreo aleatorio, es decir probabilidad clásica, nº de casos favorables/nº de casos posibles.
 
 #### 2) Argumente que la probabilidad que la *j*-ésima observación no esté en la muestra bootstrap es $(1 - 1/n)^n$.
 Como la muestra es con reposición la probabilidad de que una observación *j* no esté en la muestra es igual a la probabilidad de elegir cualquier otra observación = $(n-1)/n$, repetido cada vez que se selecciona una observación, es decir *n* veces: $[(n-1)/n]^n=(1-1/n)^n$.        
+
+Esta probabilidad es creciente y acotada.
+
+#### 3) Genere un gráfico que muestre para cada valor de *n* de 1 a 100, la probabilidad de que la observación *j*-ésima esté en la muestra *bootstrap*. Comente lo que se observa.
 
 ```{r}
 otra.muestra.bootstrap <- tibble(
@@ -77,13 +88,9 @@ otra.muestra.bootstrap <- tibble(
 )
 ```
 
-Esta probabilidad es creciente y acotada.
-
-#### 3) Genere un gráfico que muestre para cada valor de *n* de 1 a 100, la probabilidad de que la observación *j*-ésima esté en la muestra *bootstrap*. Comente lo que se observa.
-
 La probabilidad de la *j*-ésima observación de si quedar en la muestra a medida que aumenta n, es igual a *1-prob-no*, por lo que es decreciente y acotada.
 
-```{r}
+```{r, echo=FALSE}
 ggplot(data=otra.muestra.bootstrap, aes(x=n, y=prob_si))+
   geom_point(alpha = 0.5)+
   scale_y_continuous(limits = c(0,1))+
@@ -91,7 +98,7 @@ ggplot(data=otra.muestra.bootstrap, aes(x=n, y=prob_si))+
   ggtitle('Probabilidad de aparecer en el remuestreo')
 ```
 
-A medida que aumenta el número de observaciones, la probabilidad de aparecer en el muestreo se acerca rápidamente a su cota inferior.
+A medida que aumenta el número de observaciones la probabilidad de aparecer en el muestreo se acerca rápidamente a su cota inferior.
 
 ## Ejercicio 4
 
@@ -99,36 +106,38 @@ A medida que aumenta el número de observaciones, la probabilidad de aparecer en
 data_cs <- ISLR::Carseats
 ```
 
-#### 1) Dividir los datos en un conjunto de ***entrenamiento** y un conjunto de **control**.
+#### 1) Dividir los datos en un conjunto de **entrenamiento** y un conjunto de **control**.
+
+Subseteo 300 observaciones para *train* y 100 para *test* según muestra al azar:
 
 ```{r}
-# Subseteo 300 observaciones para train y ultimas 100 para test
 set.seed(2021)
 intrain <- sample(x=1:400, size=300)
 
-# Creo dataset train y test
 train <- data_cs[intrain,]
 test  <- data_cs[-intrain,]  
 ```
 
 #### 2) Ajustar un árbol de regresión utilizando la biblioteca *rpart* a los datos de entrenamiento y estimar el error de generalización del modelo.
 
-Primero ajusto el árbol de regresión con todas las variables:
+Primero ajusto el árbol de regresión con el modelo incluyendo todas las variables:
 ```{r}
-sales_tree <- rpart::rpart(Sales ~ CompPrice + Income + Advertising + Population + Price + ShelveLoc + Age + Education + Urban + US, data=train)
+sales_tree <- rpart::rpart(Sales ~ CompPrice + Income + Advertising + Population + Price + ShelveLoc + Age + Education + Urban + US, 
+                           data=train)
 
 rpart.plot(sales_tree, digits=3, cex=.6)
 ```
+
+ 
+    
 Ahora estimo los valores predichos por el modelo en el conjunto de entrenamiento y de control, luego calculo el Error Cuadrático Medio (ECM) en cada uno y comparo:
 
 ```{r}
-# Calculo predicciones
 pred_train <- predict(sales_tree, newdata=train)
 pred_test  <- predict(sales_tree, newdata=test)
 
-# Estimo ECM
-ecm_train <- sum((pred_train-train$Sales)^2)/nrow(train)
-ecm_test  <- sum((pred_test-test$Sales)^2)/nrow(test)
+ecm_train <- mean((pred_train-train$Sales)^2)
+ecm_test  <- mean((pred_test-test$Sales)^2)
 ```
 
 El ECM es de `r round(ecm_train, 3)` en el conjunto de entrenamiento y de `r round(ecm_test, 3)` en el de control.
@@ -139,15 +148,15 @@ Comenzamos estimando el árbol de regresión con un parámetro de complejidad (*
 
 ```{r}
 sales_tree <- rpart(Sales ~ CompPrice + Income + Advertising + Population + Price + ShelveLoc + Age + Education + Urban + US,
-                    data=train, control=rpart.control(cp = 0))
+                    data=train)
 
 plotcp(sales_tree)
 ```
 
-Vemos que el óptimo se alcanza para un árbol de tamaño 10, con un *cp=0.02*. Ahora vamos a podar el árbol:
+Vemos que el óptimo se alcanza para un árbol de tamaño 12, con un *cp=0.011*. Ahora vamos a podar el árbol:
 
 ```{r}
-sales_tree_prune <- prune(sales_tree, cp = 0.02)
+sales_tree_prune <- prune(sales_tree, cp = 0.011)
 rpart.plot(sales_tree_prune, digits=3)
 ```
 
@@ -157,40 +166,31 @@ Volvemos a calcular los valores predichos y el error de predicción en el conjun
 pred_train_prune <- predict(sales_tree_prune, newdata=train)
 pred_test_prune  <- predict(sales_tree_prune, newdata=test)
 
-ecm_train_prune <- sum((pred_train_prune-train$Sales)^2)/nrow(train)
-ecm_test_prune  <- sum((pred_test_prune-test$Sales)^2)/nrow(test)
+ecm_train_prune <- mean((pred_train_prune-train$Sales)^2)
+ecm_test_prune  <- mean((pred_test_prune-test$Sales)^2)
 ```
 
-Vemos que el ECM en el conjunto de entrenamiento es de `r round(ecm_train_prune, 3)` y en el de control de `r round(ecm_test_prune, 3)`. En ambos casos el ECM es mayor para el árbol podado.
+Vemos que el ECM en el conjunto de entrenamiento es de `r round(ecm_train_prune, 3)` y en el de control de `r round(ecm_test_prune, 3)`. En ambos casos el ECM es mayor para el árbol podado, lo cual es esperable porque el árbol maximal es el que minimiza el ECM.
 
 #### 4) Elige un árbol e interpreta los resultados
 
-La elección del árbol va a depender de para que lo querramos usar. Si intentamos predecir utilizaremos el árbol que minimiza el error de predicción, es decir el primero con mayor complejidad. Por otro lado si queremos explicar o entender porque se dan los distintos niveles de ventas, el segundo árbol es más simple de entender ya que tiene menor complejidad (hojas terminales.) Personalmente prefiero este último ya que el error cuadrático medio crece poco (0.8) y se gana en simplicidad.
+La elección del árbol va a depender de para que lo querramos usar. Si intentamos predecir utilizaremos el árbol que minimiza el error de predicción, es decir el primero con mayor complejidad. Por otro lado si queremos explicar o entender porque se dan los distintos niveles de ventas, el segundo árbol es más simple de entender ya que tiene menor complejidad, es decir menor cantidad de nodas. Personalmente prefiero este último ya que el error cuadrático medio crece poco (0.031) y se gana en simplicidad.
 
-#### 5) Utilizando la biblioteca *randomFores*t ajustar un bosque aleatorio a los datos de entrenamiento. Elegir el valor de *mtry* con validación cruzada.
+#### 5) Utilizando la biblioteca *randomForest* ajustar un bosque aleatorio a los datos de entrenamiento. Elegir el valor de *mtry* con validación cruzada.
 
-Estimaré la validación cruzada para un *k=5*. El siguiente código intenta estimar para todas las posibles cantidad de variables (*11 variables*), *k* submuestras aleatorias de tamaño $n-(n/k)$. Para cada una de estas submuestras calcula además el error del modelo en el cojunto de entrenamiento y en el de control. Luego se muestra el promedio de estas *k* submuestras:
+Para ver cual es el valor de *mtry* que minimiza el ECM fuera de la muestra utilizar{e el comando *tuneRF*:
 
-```{r}
-ecm_rf %>% 
-  group_by(mtry) %>% 
-  summarise(ecm_train = mean(ecm_train), 
-            ecm_test = mean(ecm_test))
-```
-
-Otro criterio:
 ```{r}
 tuneRF(x=data_cs[,2:11], y=data_cs[,1])
 ```
 
-Según este criterio el OOB (out Of Box) Error se minimiza con 10 parámetros.
+Según este criterio el OOB Error (Out Of Box Error) que minimiza con 10 variables.
 
 ```{r}
 rf_modelo <- randomForest(Sales ~ CompPrice + Income + Advertising + Population + Price + ShelveLoc + Age + Education + Urban + US,
                           data = train, 
-                          mtry = 10)
-
-
+                          mtry = 10, 
+                          importance = TRUE)
 ```
 
 #### 6) Con el bosque seleccionado, analiza la importancia de las variables en el modelo.
@@ -198,5 +198,7 @@ rf_modelo <- randomForest(Sales ~ CompPrice + Income + Advertising + Population 
 rf_modelo$importance
 ```
 
+La columna *%IncMSE* reporta los valores del *Permutation Accuracy*, es decir cuanto crece el ECM cuando la variable en cuestión se cambia por otros valores escogidos al azar. Cuanto mayor es el incremento del ECM mayor es la importancia de la variable en cuestión para predecir el valor de la avriable dependiente fuera de la muestra. En este caso, la variable más importante es *ShelveLoc* es la más importante para predecir el valor de las ventas. Vale destacar que esta es la variable que se encuentra en el primer nodo de todos los árboles que estimamos. Las otras variables de imporancia son *Price* y *CompPrice* en menor medida.
 
+El otro método para ver la importancia de las variables es el de *Node Impurity* pero está desaconsejado por arrojar resultados sesgados.
 

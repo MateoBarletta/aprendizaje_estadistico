@@ -131,8 +131,8 @@ for (i in 1:ncol(train)) {
     pred_train_rf <- predict(rf_modelo, newdata=train_rf)
     pred_test_rf  <- predict(rf_modelo, newdata=test_rf)
     
-    ecm_train_rf <- sum((pred_train_rf-train$Sales)^2)/nrow(train)
-    ecm_test_rf  <- sum((pred_test_rf-test$Sales)^2)/nrow(test)
+    ecm_train_rf <- mean((pred_train_rf-train$Sales)^2)
+    ecm_test_rf  <- mean((pred_test_rf-test$Sales)^2)
     
     aux <- tibble(
       mtry = i,
@@ -149,11 +149,19 @@ for (i in 1:ncol(train)) {
 }
 
 
+#Estimaré la validación cruzada para un *k=5*. El siguiente código intenta estimar para todas las posibles cantidad de variables (*11 variables*), *k* submuestras aleatorias de tamaño $n-(n/k)$. Para cada una de estas submuestras calcula además el error del modelo en el cojunto de entrenamiento y en el de control. Luego se muestra el promedio de estas *k* submuestras:
+#```{r}
+# ecm_rf %>% 
+#   group_by(mtry) %>% 
+#   summarise(ecm_train = mean(ecm_train), 
+#             ecm_test  = mean(ecm_test))
+#```
+
 # Promedio del error de pronostico para cada grupo, la submuestra que tiene menor ECM es la de 2 variables
 ecm_rf %>% 
   group_by(mtry) %>% 
   summarise(ecm_train = mean(ecm_train), 
-            ecm_test = mean(ecm_test))
+            ecm_test  = mean(ecm_test))
 
 # usando el comando tuneRf
 tune <- tuneRF(x=data_cs[,2:11], y=data_cs[,1])
