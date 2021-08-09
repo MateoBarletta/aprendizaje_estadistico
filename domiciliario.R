@@ -170,4 +170,5 @@ rf_modelo <- randomForest(Sales ~ CompPrice + Income + Advertising + Population 
                           data = train, 
                           mtry = 2)
 rf_modelo$forest
-
+rf_modelo$importance
+sales_tree$cptable

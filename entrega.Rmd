@@ -5,11 +5,6 @@ date: "2021-08-08"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-
 ```{r setupo, warning=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -71,7 +66,7 @@ Para *X1=4* y *X2=8* el árbol de clasificación predice **YC=A**, ya que la obs
 ## Ejercicio 3
 
 #### 1) ¿Cuál es la probabilidad que la primer observación de la muestra *bootstrap* sea la primer observación de los datos? Justifique la respuesta.
-La probabilidad de que coincidan la primera observacion de la muestra y del *bootrsap* es $1/n$, ya que se trata de un muestreo aleatorio, es decir probabilidad clásica, nº de casos favorables/nº de casos posibles.
+La probabilidad de que coincidan la primera observacion de la muestra y del *bootsrtap* es $1/n$ ya que se trata de un muestreo aleatorio, es decir probabilidad clásica, nº de casos favorables/nº de casos posibles. Para el caso del ejercicio $1/10=0.1$.
 
 #### 2) Argumente que la probabilidad que la *j*-ésima observación no esté en la muestra bootstrap es $(1 - 1/n)^n$.
 Como la muestra es con reposición la probabilidad de que una observación *j* no esté en la muestra es igual a la probabilidad de elegir cualquier otra observación = $(n-1)/n$, repetido cada vez que se selecciona una observación, es decir *n* veces: $[(n-1)/n]^n=(1-1/n)^n$.        
@@ -122,14 +117,14 @@ test  <- data_cs[-intrain,]
 
 Primero ajusto el árbol de regresión con el modelo incluyendo todas las variables:
 ```{r}
-sales_tree <- rpart::rpart(Sales ~ CompPrice + Income + Advertising + Population + Price + ShelveLoc + Age + Education + Urban + US, 
-                           data=train)
+sales_tree <- rpart::rpart(
+  Sales ~ CompPrice + Income + Advertising + Population + Price + ShelveLoc + Age + Education + Urban + US, 
+  data=train)
 
 rpart.plot(sales_tree, digits=3, cex=.6)
 ```
 
  
-    
 Ahora estimo los valores predichos por el modelo en el conjunto de entrenamiento y de control, luego calculo el Error Cuadrático Medio (ECM) en cada uno y comparo:
 
 ```{r}
@@ -147,8 +142,9 @@ El ECM es de `r round(ecm_train, 3)` en el conjunto de entrenamiento y de `r rou
 Comenzamos estimando el árbol de regresión con un parámetro de complejidad (*cp*) igual a cero y graficamos como evoluciona el error en relación al tamaño del árbol y el *cp*.
 
 ```{r}
-sales_tree <- rpart(Sales ~ CompPrice + Income + Advertising + Population + Price + ShelveLoc + Age + Education + Urban + US,
-                    data=train)
+sales_tree <- rpart(
+  Sales ~ CompPrice + Income + Advertising + Population + Price + ShelveLoc + Age + Education + Urban + US,
+  data=train)
 
 plotcp(sales_tree)
 ```
@@ -174,7 +170,7 @@ Vemos que el ECM en el conjunto de entrenamiento es de `r round(ecm_train_prune,
 
 #### 4) Elige un árbol e interpreta los resultados
 
-La elección del árbol va a depender de para que lo querramos usar. Si intentamos predecir utilizaremos el árbol que minimiza el error de predicción, es decir el primero con mayor complejidad. Por otro lado si queremos explicar o entender porque se dan los distintos niveles de ventas, el segundo árbol es más simple de entender ya que tiene menor complejidad, es decir menor cantidad de nodas. Personalmente prefiero este último ya que el error cuadrático medio crece poco (0.031) y se gana en simplicidad.
+La elección del árbol va a depender de para que lo querramos usar. Si intentamos predecir utilizaremos el árbol que minimiza el error de predicción, es decir el primero con mayor complejidad. Por otro lado si queremos explicar o entender porque se dan los distintos niveles de ventas, el segundo árbol es más simple de entender ya que tiene menor complejidad, es decir menor cantidad de nodos. Personalmente prefiero este último ya que el error cuadrático medio crece poco (0.031) y se gana en simplicidad.
 
 #### 5) Utilizando la biblioteca *randomForest* ajustar un bosque aleatorio a los datos de entrenamiento. Elegir el valor de *mtry* con validación cruzada.
 
@@ -187,10 +183,9 @@ tuneRF(x=data_cs[,2:11], y=data_cs[,1])
 Según este criterio el OOB Error (Out Of Box Error) que minimiza con 10 variables.
 
 ```{r}
-rf_modelo <- randomForest(Sales ~ CompPrice + Income + Advertising + Population + Price + ShelveLoc + Age + Education + Urban + US,
-                          data = train, 
-                          mtry = 10, 
-                          importance = TRUE)
+rf_modelo <- randomForest(
+  Sales ~ CompPrice + Income + Advertising + Population + Price + ShelveLoc + Age + Education + Urban + US,
+  data = train, mtry = 10, importance = TRUE)
 ```
 
 #### 6) Con el bosque seleccionado, analiza la importancia de las variables en el modelo.
